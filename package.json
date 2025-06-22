@@ -8,7 +8,10 @@
     "start": "next start",
     "deploy": "vercel --prod",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev"
   },
   "dependencies": {
     "next": "14.0.4",
@@ -25,7 +28,6 @@
     "lucide-react": "0.300.0",
     "@monaco-editor/react": "4.6.0",
     "monaco-editor": "0.45.0",
-    "@tanstack/react-query": "5.14.2",
     "zustand": "4.4.7",
     "axios": "1.6.2",
     "react-hook-form": "7.48.2",
@@ -42,7 +44,7 @@
     "tailwind-merge": "2.2.0",
     "react-hot-toast": "2.4.1",
     "next-themes": "0.2.1",
-    "@cerebras/cerebras_cloud_sdk": "^1.0.0"
+    "date-fns": "3.0.6"
   },
   "devDependencies": {
     "eslint": "8.56.0",
