@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    serverActions: true,
+    serverActions: {
+      allowedOrigins: ['localhost:3000', '*.vercel.app']
+    }
   },
   images: {
     domains: ['avatars.githubusercontent.com', 'lh3.googleusercontent.com'],
@@ -15,6 +17,9 @@ const nextConfig = {
     };
     return config;
   },
+  generateBuildId: async () => {
+    return 'build-' + Date.now();
+  }
 }
 
 module.exports = nextConfig
