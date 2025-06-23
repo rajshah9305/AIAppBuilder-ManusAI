@@ -1,44 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
-import { DatabaseService } from '@/lib/database';
+import { getUserProjects, createProject } from '@/lib/database';
 import { z } from 'zod';
 
 const createProjectSchema = z.object({
   name: z.string().min(1),
-  description: z.string().min(1),
+  description: z.string().optional(),
 });
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-    const user = await AuthService.getCurrentUser(token);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
-
-    const projects = await DatabaseService.getProjectsByUserId(user.id);
-
-    return NextResponse.json({
-      success: true,
-      data: projects,
-    });
+    const projects = await getUserProjects('1');
+    return NextResponse.json({ success: true, projects });
   } catch (error: any) {
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message || 'Failed to fetch projects',
-      },
+      { success: false, error: 'Failed to fetch projects' },
       { status: 500 }
     );
   }
@@ -46,42 +21,21 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-    const user = await AuthService.getCurrentUser(token);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { name, description } = createProjectSchema.parse(body);
 
-    const project = await DatabaseService.createProject({
+    const project = await createProject({
       name,
-      description,
-      userId: user.id,
+      description: description || '',
+      prompt: '',
+      generatedCode: '',
+      userId: '1',
     });
 
-    return NextResponse.json({
-      success: true,
-      data: project,
-    });
+    return NextResponse.json(project);
   } catch (error: any) {
     return NextResponse.json(
-      {
-        success: false,
-        error: error.message || 'Failed to create project',
-      },
+      { success: false, error: 'Failed to create project' },
       { status: 500 }
     );
   }

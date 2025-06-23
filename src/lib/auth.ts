@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { NextRequest } from 'next/server';
 
 const JWT_SECRET = process.env.NEXTAUTH_SECRET || 'fallback-secret-key';
 const TOKEN_KEY = 'ai-app-builder-token';
@@ -56,4 +57,16 @@ export function removeStoredToken(): void {
   if (typeof window !== 'undefined') {
     localStorage.removeItem(TOKEN_KEY);
   }
+}
+
+// Re-export database functions for auth routes
+export { getUserByEmail, createUser } from './database';
+
+export async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
+  // Try to get token from cookies or Authorization header
+  const token = request.cookies.get('auth-token')?.value ||
+                request.headers.get('authorization')?.replace('Bearer ', '');
+  if (!token) return null;
+  const payload = verifyToken(token);
+  return payload?.userId || null;
 }

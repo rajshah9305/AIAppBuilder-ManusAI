@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { AuthService } from '@/lib/auth';
-import { cerebrasService } from '@/lib/cerebras';
-import { DatabaseService } from '@/lib/database';
+import { generateAppCode } from '@/lib/cerebras';
+import { createProject, updateProject } from '@/lib/database';
+import { ProjectStatus } from '@/types';
 import { z } from 'zod';
+import { getUserIdFromRequest } from '@/lib/auth';
 
 const generateSchema = z.object({
   prompt: z.string().min(10),
@@ -11,63 +12,44 @@ const generateSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const token = authHeader.substring(7);
-    const user = await AuthService.getCurrentUser(token);
-    if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid token' },
-        { status: 401 }
-      );
-    }
-
     const body = await request.json();
     const { prompt, projectId } = generateSchema.parse(body);
 
-    // Generate app structure using Cerebras
-    const appStructure = await cerebrasService.generateAppStructure(prompt);
+    const userId = await getUserIdFromRequest(request);
+    if (!userId) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const generatedCode = await generateAppCode(prompt);
 
     let project;
     if (projectId) {
-      // Update existing project
-      project = await DatabaseService.updateProject(projectId, user.id, {
-        code: JSON.stringify(appStructure),
-        status: 'generated',
+      project = await updateProject(projectId, {
+        generatedCode,
+        status: ProjectStatus.COMPLETED,
       });
     } else {
-      // Create new project
-      project = await DatabaseService.createProject({
+      project = await createProject({
         name: `Generated App - ${new Date().toLocaleDateString()}`,
         description: prompt,
-        userId: user.id,
-        code: JSON.stringify(appStructure),
-      });
-      
-      await DatabaseService.updateProject(project.id, user.id, {
-        status: 'generated',
+        prompt,
+        generatedCode,
+        userId,
+        status: ProjectStatus.COMPLETED,
       });
     }
 
     return NextResponse.json({
       success: true,
-      data: {
-        project,
-        appStructure,
-      },
+      code: generatedCode,
+      projectId: project?.id,
     });
-  } catch (error: any) {
-    console.error('Generation error:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Generation failed';
     return NextResponse.json(
       {
         success: false,
-        error: error.message || 'Generation failed',
+        error: errorMessage,
       },
       { status: 500 }
     );
