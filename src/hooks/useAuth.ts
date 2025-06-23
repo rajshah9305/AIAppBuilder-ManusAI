@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { isAuthenticated, getStoredToken, removeStoredToken, storeToken } from "@/lib/auth";
-import { User } from "@/types";
+import { isAuthenticated, getStoredToken, removeStoredToken, storeToken } from "../lib/auth";
+import { User } from "../types";
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);

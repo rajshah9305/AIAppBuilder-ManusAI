@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Project, ProjectStatus } from "@/types";
+import { Project, ProjectStatus } from "../types";
 
 export function useProjects() {
   const [projects, setProjects] = useState<Project[]>([]);

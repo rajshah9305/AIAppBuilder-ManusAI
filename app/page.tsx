@@ -3,8 +3,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/Button';
-import { useAuth } from '@/hooks/useAuth';
+import { Button } from '../components/ui/Button';
+import { useAuth } from '../src/hooks/useAuth';
 import { 
   Sparkles, 
   Code, 

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { RegisterForm } from '@/components/auth/RegisterForm';
+import { RegisterForm } from '../../../components/auth/RegisterForm';
 import { Sparkles } from 'lucide-react';
 import Link from 'next/link';
 

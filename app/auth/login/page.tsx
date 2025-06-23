@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { LoginForm } from '@/components/auth/LoginForm';
+import { LoginForm } from '../../../components/auth/LoginForm';
 import { Sparkles } from 'lucide-react';
 import Link from 'next/link';
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GenerateRequest, GenerateResponse } from '@/types';
+import { GenerateRequest, GenerateResponse } from '../types';
 
 export function useAIGeneration() {
   const [loading, setLoading] = useState(false);

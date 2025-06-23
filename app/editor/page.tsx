@@ -1,239 +1,193 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/Button';
-import { Textarea } from '@/components/ui/Textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { useAuth } from '@/hooks/useAuth';
-import { Sparkles, ArrowLeft, Loader2, Play, Download } from 'lucide-react';
-import { toast } from 'react-hot-toast';
-import Editor from '@monaco-editor/react';
+import { Button } from '../../components/ui/Button';
+import { Textarea } from '../../components/ui/Textarea';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/Card';
+import { useAuth } from '../../src/hooks/useAuth';
+import { 
+  Play, 
+  Save, 
+  Download, 
+  Code, 
+  Eye, 
+  Sparkles,
+  ArrowLeft,
+  Loader2
+} from 'lucide-react';
+
+const editorOptions = {
+  minimap: { enabled: false },
+  fontSize: 14,
+  wordWrap: 'on' as const,
+  readOnly: false,
+  scrollBeyondLastLine: false,
+  automaticLayout: true,
+  quickSuggestions: true,
+  formatOnPaste: true,
+  formatOnType: true
+};
 
 export default function EditorPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [projectName, setProjectName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'prompt' | 'code' | 'preview'>('prompt');
+  const projectId = searchParams.get('project');
 
-  if (!user) {
-    router.push('/auth/login');
-    return null;
-  }
-
-  const handleGenerate = async () => {
-    if (!prompt.trim()) {
-      toast.error('Please enter a description');
+  useEffect(() => {
+    if (!user) {
+      router.push('/auth/login');
       return;
     }
+  }, [user, router]);
 
-    setIsGenerating(true);
+  const handleGenerate = async () => {
+    if (!prompt.trim()) return;
+    
+    setLoading(true);
     try {
       const response = await fetch('/api/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ prompt }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, projectId })
       });
-
-      const result = await response.json();
-      if (result.success) {
-        const appStructure = result.data.appStructure;
-        const mainComponent = appStructure.components['App.tsx'] || 
-                            Object.values(appStructure.components)[0];
-        setGeneratedCode(mainComponent);
-        setProjectName(result.data.project?.name || 'Generated App');
-        toast.success('App generated successfully!');
-      } else {
-        toast.error(result.error || 'Generation failed');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setGeneratedCode(data.code);
+        setActiveTab('code');
       }
     } catch (error) {
-      toast.error('Something went wrong');
+      console.error('Generation failed:', error);
     } finally {
-      setIsGenerating(false);
+      setLoading(false);
     }
   };
 
-  const handleDownload = () => {
-    if (!generatedCode) {
-      toast.error('No code to download');
-      return;
-    }
-
-    const blob = new Blob([generatedCode], { type: 'text/typescript' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'App.tsx';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Code downloaded!');
+  const handleSave = async () => {
+    // Save functionality
+    console.log('Saving project...');
   };
 
-  const handlePreview = () => {
-    if (!generatedCode) {
-      toast.error('No code to preview');
-      return;
-    }
-    
-    // Create a simple preview in a new window
-    const previewWindow = window.open('', '_blank');
-    if (previewWindow) {
-      previewWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <title>App Preview</title>
-          <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-          <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-          <script src="https://cdn.tailwindcss.com"></script>
-        </head>
-        <body>
-          <div id="root"></div>
-          <script>
-            // This is a simplified preview - in production you'd use proper bundling
-            console.log('Preview mode - code would be rendered here');
-          </script>
-        </body>
-        </html>
-      `);
-      previewWindow.document.close();
-    }
-  };
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <header className="bg-white dark:bg-gray-800 border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                onClick={() => router.push('/dashboard')}
-                className="mr-4"
-              >
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" onClick={() => router.push('/dashboard')}>
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="flex items-center space-x-2">
                 <Sparkles className="h-6 w-6 text-primary" />
-                <h1 className="text-lg font-semibold">AI App Editor</h1>
+                <h1 className="text-lg font-semibold">AI App Builder</h1>
               </div>
             </div>
-            {generatedCode && (
-              <div className="flex items-center space-x-2">
-                <Button variant="outline" onClick={handlePreview}>
-                  <Play className="h-4 w-4 mr-2" />
-                  Preview
-                </Button>
-                <Button variant="outline" onClick={handleDownload}>
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
-              </div>
-            )}
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" onClick={handleSave}>
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
+              <Button variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-12rem)]">
-          {/* Input Panel */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col"
-          >
-            <Card className="flex-1 flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Sparkles className="h-5 w-5 mr-2 text-primary" />
-                  Describe Your App
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col space-y-4">
-                <Textarea
-                  value={prompt}
-                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
-                  placeholder="Describe the app you want to build in detail...
-
-Examples:
-• Create a todo app with add, edit, delete functionality and dark mode
-• Build a weather dashboard with current conditions and 5-day forecast
-• Make a calculator app with basic arithmetic operations
-• Design a portfolio website with projects showcase and contact form"
-                  className="flex-1 min-h-[200px] resize-none"
-                />
-                <Button
-                  onClick={handleGenerate}
-                  disabled={isGenerating || !prompt.trim()}
-                  className="w-full"
-                  size="lg"
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-200px)]">
+          {/* Left Panel - Prompt */}
+          <Card className="flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Sparkles className="h-5 w-5 mr-2" />
+                Describe Your App
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col">
+              <Textarea
+                placeholder="Describe the app you want to build... For example: 'Create a todo app with dark mode, drag and drop functionality, and local storage'"
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                className="flex-1 min-h-[200px] resize-none"
+              />
+              <div className="mt-4 flex gap-2">
+                <Button 
+                  onClick={handleGenerate} 
+                  disabled={loading || !prompt.trim()}
+                  className="flex-1"
                 >
-                  {isGenerating ? (
+                  {loading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating with AI...
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Generating...
                     </>
                   ) : (
                     <>
-                      <Sparkles className="mr-2 h-4 w-4" />
-                      Generate App with AI
+                      <Play className="h-4 w-4 mr-2" />
+                      Generate App
                     </>
                   )}
                 </Button>
-                {projectName && (
-                  <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
-                    Project: {projectName}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {/* Code Editor Panel */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col"
-          >
-            <Card className="flex-1 flex flex-col">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Generated Code</span>
-                  {generatedCode && (
-                    <div className="text-sm text-green-600 dark:text-green-400">
-                      ✓ Ready
-                    </div>
-                  )}
+          {/* Right Panel - Code/Preview */}
+          <Card className="flex flex-col">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center">
+                  <Code className="h-5 w-5 mr-2" />
+                  Generated Code
                 </CardTitle>
-              </CardHeader>
-              <CardContent className="flex-1 p-0">
-                <div className="h-full border-t">
-                  <Editor
-                    height="100%"
-                    defaultLanguage="typescript"
-                    value={generatedCode || '// Your AI-generated React code will appear here...\n// Describe your app in the left panel and click "Generate App with AI"'}
-                    theme="vs-dark"
-                    options={{
-                      minimap: { enabled: false },
-                      fontSize: 14,
-                      wordWrap: 'on',
-                      readOnly: false,
-                      scrollBeyondLastLine: false,
-                      automaticLayout: true,
-                    }}
-                    onChange={(value) => setGeneratedCode(value || '')}
-                  />
+                <div className="flex border rounded-md">
+                  <Button
+                    variant={activeTab === 'code' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('code')}
+                  >
+                    Code
+                  </Button>
+                  <Button
+                    variant={activeTab === 'preview' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setActiveTab('preview')}
+                  >
+                    <Eye className="h-4 w-4 mr-1" />
+                    Preview
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1 flex flex-col">
+              {activeTab === 'code' ? (
+                <div className="flex-1 bg-gray-900 rounded-md p-4 overflow-auto">
+                  <pre className="text-green-400 text-sm font-mono whitespace-pre-wrap">
+                    {generatedCode || '// Your generated code will appear here...'}
+                  </pre>
+                </div>
+              ) : (
+                <div className="flex-1 bg-white rounded-md border flex items-center justify-center">
+                  <div className="text-center text-gray-500">
+                    <Eye className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                    <p>Preview will be available after code generation</p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

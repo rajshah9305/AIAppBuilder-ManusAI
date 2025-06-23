@@ -3,15 +3,15 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { useAuth } from '@/hooks/useAuth';
-import { useProjects } from '@/hooks/useProjects';
-import { Button } from '@/components/ui/Button';
-import { ProjectCard } from '@/components/dashboard/ProjectCard';
-import { CreateProjectModal } from '@/components/dashboard/CreateProjectModal';
-import { Project } from '@/types';
+import { useAuth } from '../../src/hooks/useAuth';
+import { useProjects } from '../../src/hooks/useProjects';
+import { Button } from '../../components/ui/Button';
+import { ProjectCard } from '../../components/dashboard/ProjectCard';
+import { CreateProjectModal } from '../../components/dashboard/CreateProjectModal';
+import { Project } from '../../src/types';
 import { Plus, LogOut, Sparkles, Search, Filter } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { Input } from '@/components/ui/Input';
+import { Input } from '../../components/ui/Input';
 
 export default function DashboardPage() {
   const router = useRouter();

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateAppCode } from '@/lib/cerebras';
-import { createProject, updateProject } from '@/lib/database';
-import { ProjectStatus } from '@/types';
+import { generateAppCode } from '../../../src/lib/cerebras';
+import { createProject, updateProject } from '../../../src/lib/database';
+import { ProjectStatus } from '../../../src/types';
 import { z } from 'zod';
-import { getUserIdFromRequest } from '@/lib/auth';
+import { getUserIdFromRequest } from '../../../src/lib/auth';
 
 const generateSchema = z.object({
   prompt: z.string().min(10),
