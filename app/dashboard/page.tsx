@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../src/hooks/useAuth';
@@ -21,17 +21,17 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  const loadProjects = useCallback(async () => {
+    await fetchProjects();
+  }, [fetchProjects]);
+
   useEffect(() => {
     if (!user) {
       router.push('/auth/login');
       return;
     }
     loadProjects();
-  }, [user, router]);
-
-  const loadProjects = async () => {
-    await fetchProjects();
-  };
+  }, [user, router, loadProjects]);
 
   const handleLogout = () => {
     logout();
