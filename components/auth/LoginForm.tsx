@@ -23,7 +23,7 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const { setUser, setToken } = useAuth();
+  const { login } = useAuth();
 
   const {
     register,
@@ -45,8 +45,7 @@ export function LoginForm() {
       const result = await response.json();
 
       if (result.success) {
-        setUser(result.data.user);
-        setToken(result.data.token);
+        login(result.data.token, result.data.user);
         toast.success('Welcome back!');
         router.push('/dashboard');
       } else {

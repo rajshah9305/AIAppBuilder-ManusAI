@@ -15,8 +15,8 @@ import { Input } from '@/components/ui/Input';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user, logout, token } = useAuth();
-  const { projects, setProjects, addProject, removeProject, setLoading, isLoading } = useProjects();
+  const { user, logout } = useAuth();
+  const { projects, loading, error, fetchProjects, createProject, deleteProject: removeProject } = useProjects();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -30,22 +30,7 @@ export default function DashboardPage() {
   }, [user, router]);
 
   const loadProjects = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('/api/projects', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const result = await response.json();
-      if (result.success) {
-        setProjects(result.data);
-      } else {
-        toast.error('Failed to load projects');
-      }
-    } catch (error) {
-      toast.error('Failed to load projects');
-    } finally {
-      setLoading(false);
-    }
+    await fetchProjects();
   };
 
   const handleLogout = () => {
@@ -57,28 +42,13 @@ export default function DashboardPage() {
     if (!confirm('Are you sure you want to delete this project?')) {
       return;
     }
-
-    try {
-      const response = await fetch(`/api/projects/${projectId}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        removeProject(projectId);
-        toast.success('Project deleted successfully');
-      } else {
-        toast.error(result.error || 'Failed to delete project');
-      }
-    } catch (error) {
-      toast.error('Failed to delete project');
-    }
+    await removeProject(projectId);
+    toast.success('Project deleted successfully');
   };
 
   const filteredProjects = projects.filter(project => {
     const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchQuery.toLowerCase());
+                         (project.description || '').toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -129,7 +99,7 @@ export default function DashboardPage() {
             <Input
               placeholder="Search projects..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -145,7 +115,7 @@ export default function DashboardPage() {
           </select>
         </div>
 
-        {isLoading ? (
+        {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
@@ -196,8 +166,8 @@ export default function DashboardPage() {
       <CreateProjectModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onProjectCreated={(project) => {
-          addProject(project);
+        onProjectCreated={(project: Project) => {
+          loadProjects();
           router.push(`/editor?project=${project.id}`);
         }}
       />

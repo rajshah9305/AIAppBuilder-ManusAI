@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { Project } from '@/types';
+import { Project, ProjectStatus } from '@/types';
 import { Calendar, Code, ExternalLink, Trash2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -16,12 +16,14 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onEdit, onDelete, onView }: ProjectCardProps) {
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: ProjectStatus) => {
     switch (status) {
-      case 'generated':
+      case ProjectStatus.COMPLETED:
         return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'deployed':
+      case ProjectStatus.GENERATING:
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
+      case ProjectStatus.ERROR:
+        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300';
       default:
         return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
     }
@@ -71,7 +73,7 @@ export function ProjectCard({ project, onEdit, onDelete, onView }: ProjectCardPr
               Edit
             </Button>
             
-            {project.status === 'generated' && (
+            {project.status === ProjectStatus.COMPLETED && (
               <Button
                 variant="outline"
                 size="sm"

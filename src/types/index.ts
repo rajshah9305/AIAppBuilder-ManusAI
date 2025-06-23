@@ -1,47 +1,45 @@
 export interface User {
   id: string;
-  email: string;
   name: string;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Project {
   id: string;
   name: string;
-  description: string;
-  code: string;
-  preview?: string;
-  status: 'draft' | 'generated' | 'deployed';
+  description?: string;
+  prompt: string;
+  generatedCode: string;
   userId: string;
+  status: ProjectStatus;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface GenerationRequest {
+export enum ProjectStatus {
+  DRAFT = 'DRAFT',
+  GENERATING = 'GENERATING',
+  COMPLETED = 'COMPLETED',
+  ERROR = 'ERROR'
+}
+
+export interface GenerateRequest {
   prompt: string;
   projectId?: string;
 }
 
-export interface GenerationResponse {
+export interface GenerateResponse {
   success: boolean;
-  data?: {
-    code: string;
-    preview?: string;
-  };
+  code?: string;
   error?: string;
-}
-
-export interface ApiResponse<T = any> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
+  projectId?: string;
 }
 
 export interface AuthResponse {
   success: boolean;
-  data?: {
-    user: User;
-    token: string;
-  };
+  user?: User;
+  token?: string;
   error?: string;
 }

@@ -1,30 +1,43 @@
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import { User } from '@/types';
+import { useState, useEffect } from "react";
+import { isAuthenticated, getStoredToken, removeStoredToken, storeToken } from "@/lib/auth";
+import { User } from "@/types";
 
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  isLoading: boolean;
-  setUser: (user: User | null) => void;
-  setToken: (token: string | null) => void;
-  setLoading: (loading: boolean) => void;
-  logout: () => void;
-}
+export function useAuth() {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
-export const useAuth = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      token: null,
-      isLoading: false,
-      setUser: (user) => set({ user }),
-      setToken: (token) => set({ token }),
-      setLoading: (isLoading) => set({ isLoading }),
-      logout: () => set({ user: null, token: null }),
-    }),
-    {
-      name: 'auth-storage',
+  useEffect(() => {
+    const token = getStoredToken();
+    if (token && isAuthenticated(token)) {
+      // In a real app, decode JWT to get user info
+      setUser({ 
+        id: "1", 
+        name: "AI Builder User", 
+        email: "user@aiappbuilder.com",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
     }
-  )
-);
+    setLoading(false);
+  }, []);
+
+  const login = (token: string, userData?: User) => {
+    if (isAuthenticated(token)) {
+      storeToken(token);
+      setUser(userData || { 
+        id: "1", 
+        name: "AI Builder User", 
+        email: "user@aiappbuilder.com",
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+    }
+  };
+
+  const logout = () => {
+    removeStoredToken();
+    setUser(null);
+  };
+
+  return { user, login, logout, loading };
+}

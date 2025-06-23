@@ -1,99 +1,64 @@
-import { PrismaClient } from '@prisma/client';
+import { User, Project, ProjectStatus } from '@/types';
 
-declare global {
-  var prisma: PrismaClient | undefined;
+// Mock database functions - replace with actual Prisma calls in production
+const users: User[] = [];
+const projects: Project[] = [];
+
+export async function getUser(id: string): Promise<User | null> {
+  return users.find(u => u.id === id) || null;
 }
 
-export const db = globalThis.prisma || new PrismaClient();
-
-if (process.env.NODE_ENV !== 'production') {
-  globalThis.prisma = db;
+export async function getUserByEmail(email: string): Promise<User | null> {
+  return users.find(u => u.email === email) || null;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  createdAt: Date;
-  updatedAt: Date;
+export async function createUser(userData: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): Promise<User> {
+  const user: User = {
+    ...userData,
+    id: Date.now().toString(),
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  users.push(user);
+  return user;
 }
 
-export interface Project {
-  id: string;
-  name: string;
-  description: string;
-  userId: string;
-  code: string;
-  preview?: string;
-  status: 'draft' | 'generated' | 'deployed';
-  createdAt: Date;
-  updatedAt: Date;
+export async function getUserProjects(userId: string): Promise<Project[]> {
+  return projects.filter(p => p.userId === userId);
 }
 
-export class DatabaseService {
-  static async createUser(email: string, name: string, hashedPassword: string) {
-    return await db.user.create({
-      data: {
-        email,
-        name,
-        password: hashedPassword,
-      },
-    });
-  }
+export async function createProject(projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Project> {
+  const project: Project = {
+    ...projectData,
+    id: Date.now().toString(),
+    status: ProjectStatus.DRAFT,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  projects.push(project);
+  return project;
+}
 
-  static async getUserByEmail(email: string) {
-    return await db.user.findUnique({
-      where: { email },
-    });
-  }
+export async function updateProject(id: string, updates: Partial<Project>): Promise<Project | null> {
+  const index = projects.findIndex(p => p.id === id);
+  if (index === -1) return null;
+  
+  projects[index] = {
+    ...projects[index],
+    ...updates,
+    updatedAt: new Date()
+  };
+  return projects[index];
+}
 
-  static async getUserById(id: string) {
-    return await db.user.findUnique({
-      where: { id },
-    });
-  }
+export async function deleteProject(id: string): Promise<boolean> {
+  const index = projects.findIndex(p => p.id === id);
+  if (index === -1) return false;
+  
+  projects.splice(index, 1);
+  return true;
+}
 
-  static async createProject(data: {
-    name: string;
-    description: string;
-    userId: string;
-    code?: string;
-  }) {
-    return await db.project.create({
-      data: {
-        ...data,
-        code: data.code || '',
-        status: 'draft',
-      },
-    });
-  }
-
-  static async getProjectsByUserId(userId: string) {
-    return await db.project.findMany({
-      where: { userId },
-      orderBy: { updatedAt: 'desc' },
-    });
-  }
-
-  static async getProjectById(id: string, userId: string) {
-    return await db.project.findFirst({
-      where: { id, userId },
-    });
-  }
-
-  static async updateProject(id: string, userId: string, data: Partial<Project>) {
-    return await db.project.update({
-      where: { id },
-      data: {
-        ...data,
-        updatedAt: new Date(),
-      },
-    });
-  }
-
-  static async deleteProject(id: string, userId: string) {
-    return await db.project.delete({
-      where: { id },
-    });
-  }
+export async function getProject(id: string): Promise<Project | null> {
+  return projects.find(p => p.id === id) || null;
 }

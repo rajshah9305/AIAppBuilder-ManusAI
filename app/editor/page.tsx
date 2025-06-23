@@ -13,7 +13,7 @@ import Editor from '@monaco-editor/react';
 
 export default function EditorPage() {
   const router = useRouter();
-  const { user, token } = useAuth();
+  const { user } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [generatedCode, setGeneratedCode] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -36,7 +36,6 @@ export default function EditorPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ prompt }),
       });
@@ -160,7 +159,7 @@ export default function EditorPage() {
               <CardContent className="flex-1 flex flex-col space-y-4">
                 <Textarea
                   value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
                   placeholder="Describe the app you want to build in detail...
 
 Examples:

@@ -8,19 +8,18 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { X, Loader2, Plus } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { useAuth } from '@/hooks/useAuth';
+import { Project } from '@/types';
 
 interface CreateProjectModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onProjectCreated: (project: any) => void;
+  onProjectCreated: (project: Project) => void;
 }
 
 export function CreateProjectModal({ isOpen, onClose, onProjectCreated }: CreateProjectModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
-  const { token } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,7 +35,6 @@ export function CreateProjectModal({ isOpen, onClose, onProjectCreated }: Create
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ name, description }),
       });
@@ -104,7 +102,7 @@ export function CreateProjectModal({ isOpen, onClose, onProjectCreated }: Create
                     <Input
                       id="name"
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
                       placeholder="Enter project name"
                       disabled={isCreating}
                     />
@@ -117,7 +115,7 @@ export function CreateProjectModal({ isOpen, onClose, onProjectCreated }: Create
                     <Textarea
                       id="description"
                       value={description}
-                      onChange={(e) => setDescription(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                       placeholder="Describe what you want to build..."
                       className="min-h-[100px]"
                       disabled={isCreating}
